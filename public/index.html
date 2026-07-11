@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <!--
+  /**
+   * @file: index.html
+   * @description: SPA Frontend Monyx — Dark Mode Dashboard dengan login, metrics, services, logs, cron, settings
+   * @dependencies: Tailwind CSS (CDN), Chart.js (CDN), JetBrains Mono (Google Fonts), style.css, app.js
+   * @state: Stable
+   * @last_updated: 2026-07-06 v0.2.0
+   */
+  -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Monyx - Armbian Server Monitor Dashboard. Real-time system metrics, service management, and server monitoring.">
+  <title>Monyx — Server Monitor</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS v3 Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ==========================================
+       SEGMENT: LOGIN PAGE
+       ========================================== -->
+  <div id="loginPage" class="login-container">
+    <div class="login-card">
+      <div class="logo">
+        <h1>◆ MONYX</h1>
+        <p>Armbian Server Monitor</p>
+      </div>
+
+      <div id="loginError" class="login-error"></div>
+
+      <form id="loginForm" autocomplete="off">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="admin" required autofocus>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" id="loginBtn" class="btn-primary">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       SEGMENT: DASHBOARD
+       ========================================== -->
+  <div id="dashboard" class="dashboard">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="status-dot"></div>
+        <h1>◆ MONYX</h1>
+      </div>
+      <div class="header-actions">
+        <span class="hostname" id="hostnameDisplay">—</span>
+        <button class="btn-icon" id="refreshBtn" title="Refresh">
+          <i data-lucide="refresh-cw" style="width:16px;height:16px"></i>
+        </button>
+        <button class="btn-icon" id="logoutBtn" title="Logout">
+          <i data-lucide="log-out" style="width:16px;height:16px"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" id="navTabs">
+      <button class="nav-tab active" data-tab="overview">
+        <i data-lucide="layout-dashboard" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>
+        Overview
+      </button>
+      <button class="nav-tab" data-tab="services">
+        <i data-lucide="server" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>
+        Services
+      </button>
+      <button class="nav-tab" data-tab="logs">
+        <i data-lucide="terminal" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>
+        Logs
+      </button>
+      <button class="nav-tab" data-tab="cron">
+        <i data-lucide="clock" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>
+        Cron Jobs
+      </button>
+      <button class="nav-tab" data-tab="settings">
+        <i data-lucide="settings" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>
+        Settings
+      </button>
+      <button class="nav-tab" data-tab="files" id="navTabFiles" style="display:none">
+        <i data-lucide="folder-open" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px"></i>
+        Files
+      </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- ==========================================
+           TAB: OVERVIEW
+           ========================================== -->
+      <div id="tab-overview" class="tab-panel active">
+
+        <!-- System Info Bar -->
+        <div class="sys-info-bar" id="sysInfoBar">
+          <div class="sys-info-item">
+            <span class="label">Uptime:</span>
+            <span class="value" id="uptimeValue">—</span>
+          </div>
+          <div class="sys-info-item">
+            <span class="label">Load:</span>
+            <span class="value" id="loadValue">—</span>
+          </div>
+          <div class="sys-info-item">
+            <span class="label">Cores:</span>
+            <span class="value" id="cpuCoresValue">—</span>
+          </div>
+          <div class="sys-info-item">
+            <span class="label">Board:</span>
+            <span class="value" id="boardValue">—</span>
+          </div>
+          <div class="sys-info-item">
+            <span class="label">Kernel:</span>
+            <span class="value" id="kernelValue">—</span>
+          </div>
+          <div class="sys-info-item">
+            <span class="label">OS:</span>
+            <span class="value" id="platformValue">—</span>
+          </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="metrics-grid">
+
+          <!-- CPU Temperature -->
+          <div class="metric-card temp">
+            <div class="metric-header">
+              <span class="label">CPU Temperature</span>
+              <div class="icon">🌡️</div>
+            </div>
+            <div class="metric-value">
+              <span id="cpuTempValue">—</span>
+              <span class="unit">°C</span>
+            </div>
+            <div class="metric-sub" id="cpuTempSource">Source: —</div>
+            <div class="progress-bar">
+              <div class="progress-fill safe" id="cpuTempBar" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- CPU Usage -->
+          <div class="metric-card" style="--card-accent: #f59e0b">
+            <div style="position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;background:linear-gradient(135deg, #f59e0b, #ef4444)"></div>
+            <div class="metric-header">
+              <span class="label">CPU Usage</span>
+              <div class="icon" style="background:rgba(245,158,11,0.15);color:#f59e0b">⚡</div>
+            </div>
+            <div class="metric-value">
+              <span id="cpuUsageValue">—</span>
+              <span class="unit">%</span>
+            </div>
+            <div class="metric-sub" id="cpuModelDetail">—</div>
+            <div class="progress-bar">
+              <div class="progress-fill safe" id="cpuUsageBar" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- RAM Usage -->
+          <div class="metric-card ram">
+            <div class="metric-header">
+              <span class="label">Memory (RAM)</span>
+              <div class="icon">💾</div>
+            </div>
+            <div class="metric-value">
+              <span id="ramValue">—</span>
+              <span class="unit">%</span>
+            </div>
+            <div class="metric-sub" id="ramDetail">— / —</div>
+            <div class="progress-bar">
+              <div class="progress-fill safe" id="ramBar" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Disk Usage -->
+          <div class="metric-card disk">
+            <div class="metric-header">
+              <span class="label">Disk Usage</span>
+              <div class="icon">💿</div>
+            </div>
+            <div class="metric-value">
+              <span id="diskValue">—</span>
+              <span class="unit">%</span>
+            </div>
+            <div class="metric-sub" id="diskDetail">— / —</div>
+            <div class="progress-bar">
+              <div class="progress-fill safe" id="diskBar" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Network -->
+          <div class="metric-card network">
+            <div class="metric-header">
+              <span class="label">Network I/O</span>
+              <div class="icon">📡</div>
+            </div>
+            <div class="metric-value" style="font-size:1.3rem">
+              <span id="netRxValue">↓ 0 B/s</span>
+            </div>
+            <div class="metric-value" style="font-size:1.3rem;margin-top:0.25rem">
+              <span id="netTxValue">↑ 0 B/s</span>
+            </div>
+            <div class="metric-sub" id="netInterface">Interface: —</div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-container">
+          <h3>📈 System Metrics History</h3>
+          <div class="chart-wrapper">
+            <canvas id="metricsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Network Interfaces -->
+        <div class="chart-container">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <h3 style="margin-bottom:0">🌐 Network Interfaces</h3>
+            <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--text-muted);cursor:pointer">
+              <input type="checkbox" id="filterPhysNet" checked style="accent-color:var(--accent-blue)">
+              Physical Only
+            </label>
+          </div>
+          <div class="service-list" id="networkList">
+            <div style="text-align:center;padding:1rem;color:var(--text-muted)">Waiting for data...</div>
+          </div>
+        </div>
+
+        <!-- Disk Partitions -->
+        <div class="chart-container" id="partitionsContainer" style="display:none">
+          <h3>💿 Attached Storage & Partitions</h3>
+          <div id="partitionsList"></div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           TAB: SERVICES
+           ========================================== -->
+      <div id="tab-services" class="tab-panel">
+        <div class="service-list" id="serviceList">
+          <div style="text-align:center;padding:2rem;color:var(--text-muted)">
+            <div class="spinner"></div>
+            <p style="margin-top:0.75rem">Loading services...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           TAB: LOGS
+           ========================================== -->
+      <div id="tab-logs" class="tab-panel">
+        <div class="log-viewer">
+          <div class="log-toolbar">
+            <select id="logService">
+              <option value="">System Log</option>
+              <option value="nginx">nginx</option>
+              <option value="docker">docker</option>
+              <option value="mariadb">mariadb</option>
+              <option value="ssh">ssh</option>
+              <option value="sshd">sshd</option>
+              <option value="monyx">monyx</option>
+              <option value="zerotier-one">zerotier</option>
+            </select>
+            <input type="number" id="logLines" value="50" min="10" max="200" style="width:80px" placeholder="Lines">
+            <button class="btn-icon" id="fetchLogsBtn">
+              <i data-lucide="download" style="width:14px;height:14px"></i> Fetch
+            </button>
+          </div>
+          <div class="log-output" id="logOutput">
+            <span style="color:var(--text-muted)">Select a service and click Fetch to view logs...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           TAB: CRON JOBS
+           ========================================== -->
+      <div id="tab-cron" class="tab-panel">
+        <div class="cron-form" id="cronForm">
+          <input type="text" id="cronSchedule" placeholder="*/5 * * * *" title="Cron Schedule">
+          <input type="text" id="cronCommand" placeholder="/path/to/script.sh" title="Command">
+          <button class="btn-add" id="addCronBtn">+ Add</button>
+        </div>
+
+        <div class="cron-list" id="cronList" style="margin-top:1rem">
+          <div style="text-align:center;padding:2rem;color:var(--text-muted)">
+            <div class="spinner"></div>
+            <p style="margin-top:0.75rem">Loading cron jobs...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           TAB: SETTINGS
+           ========================================== -->
+      <div id="tab-settings" class="tab-panel">
+        <div class="settings-card">
+          <h3>🤖 Telegram Bot Configuration</h3>
+          <div class="settings-form">
+            <div class="form-group">
+              <label for="telegramChatId">Chat ID</label>
+              <input type="text" id="telegramChatId" placeholder="e.g. 123456789">
+            </div>
+            <div class="form-group">
+              <label for="telegramToken">Bot Token</label>
+              <input type="text" id="telegramToken" placeholder="e.g. 123456:ABC-DEF...">
+            </div>
+            <button class="btn-save" id="saveTelegramBtn">Save Configuration</button>
+          </div>
+        </div>
+
+        <div class="settings-card" style="margin-top:1.5rem">
+          <h3>⚡ System Power Control</h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Perform power control actions on the server.</p>
+          <div style="display:flex;gap:0.75rem">
+            <button class="btn-sm stop" style="padding:0.6rem 1.25rem;font-size:0.8rem" onclick="systemPowerAction('reboot')">Reboot Server</button>
+            <button class="btn-sm stop" style="padding:0.6rem 1.25rem;font-size:0.8rem;background:rgba(239,68,68,0.2);border-color:var(--accent-red)" onclick="systemPowerAction('shutdown')">Shutdown Server</button>
+          </div>
+        </div>
+
+        <div class="settings-card" style="margin-top:1.5rem">
+          <h3>📂 Modules</h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Enable or disable optional features.</p>
+          <div class="module-toggle-row">
+            <div>
+              <span class="module-label">File Manager</span>
+              <span style="font-size:0.75rem;color:var(--text-muted);display:block">Browse and manage files in /mnt/</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="moduleFileManager">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           TAB: FILES (visible only when module enabled)
+           ========================================== -->
+      <div id="tab-files" class="tab-panel">
+        <div class="file-manager">
+          <!-- Breadcrumb -->
+          <div class="file-breadcrumb" id="fileBreadcrumb">
+            <span class="breadcrumb-item" data-path="/mnt">/mnt</span>
+          </div>
+
+          <!-- Toolbar -->
+          <div class="file-toolbar">
+            <button class="btn-icon" id="fileRefreshBtn" title="Refresh">
+              <i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Refresh
+            </button>
+            <button class="btn-icon" id="fileMkdirBtn" title="New Folder">
+              <i data-lucide="folder-plus" style="width:14px;height:14px"></i> New Folder
+            </button>
+            <label class="btn-icon file-upload-label" title="Upload File">
+              <i data-lucide="upload" style="width:14px;height:14px"></i> Upload
+              <input type="file" id="fileUploadInput" style="display:none">
+            </label>
+          </div>
+
+          <!-- File Table -->
+          <div class="file-table-wrapper">
+            <table class="file-table">
+              <thead>
+                <tr>
+                  <th style="width:40%">Name</th>
+                  <th style="width:15%">Size</th>
+                  <th style="width:25%">Modified</th>
+                  <th style="width:20%;text-align:right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="fileTableBody">
+                <tr>
+                  <td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted)">
+                    <div class="spinner"></div>
+                    <p style="margin-top:0.75rem">Enable File Manager in Settings to browse files...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</div>
+
+<!-- Context Menu -->
+<div id="fileContextMenu" class="context-menu">
+  <button class="context-item" id="ctxOpenBtn"><i data-lucide="folder-open"></i> Open / Preview</button>
+  <button class="context-item" id="ctxDownloadBtn"><i data-lucide="download"></i> Download</button>
+  <button class="context-item" id="ctxRenameBtn"><i data-lucide="edit-3"></i> Rename</button>
+  <button class="context-item delete" id="ctxDeleteBtn"><i data-lucide="trash-2"></i> Delete</button>
+</div>
+
+<!-- Media Preview Modal -->
+<div id="mediaPreviewModal" class="modal" style="display:none">
+  <div class="modal-content glass" style="max-width:850px;width:95%">
+    <div class="modal-header">
+      <h3 id="previewTitle">File Preview</h3>
+      <button class="close-btn" id="closePreviewBtn" title="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="previewBody" style="display:flex;justify-content:center;align-items:center;min-height:220px;overflow:auto;max-height:75vh">
+      <!-- Content dynamically inserted -->
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- App Logic -->
+<script src="app.js"></script>
+
+</body>
+</html>
