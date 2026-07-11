@@ -19,3 +19,8 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Project planning & agent files (non-deploy/functional)
+agent_initial_prompt.md
+armbian_monitor_plan.md
+system-workflow.md
